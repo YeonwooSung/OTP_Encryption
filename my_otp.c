@@ -6,16 +6,13 @@
 // This function makes the child processes.
 void forkChildren() {
     for (int kid = 0; kid < 2; kid++) {
-        pid_t pid = fork();
+        pid_t pid = fork(); //gets the process id.
 
         if (pid < 0) { //The error happened when the value of pid is less than 0.
             printf("Error occurred");
             exit(1); //terminate the program
         } else if (pid == 0) { //If the value of the pid is 0, now we are in the child process.
-            //TODO execute the suitable exe file.
-        } else { //If the value of the pid is greater than 0, we are in the parent process.
-            printf("This is the parent process!");
-            exit(1); //terminate the program
+            //TODO execute the suitable exe file. Should use the execl()
         }
     }
 }
