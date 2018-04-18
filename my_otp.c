@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 // This function makes the child processes.
-void forkChildren() {
+void forkChildren(char *argv[]) {
     for (int kid = 0; kid < 2; kid++) {
         pid_t pid = fork(); //gets the process id.
 
@@ -12,7 +12,11 @@ void forkChildren() {
             printf("Error occurred");
             exit(1); //terminate the program
         } else if (pid == 0) { //If the value of the pid is 0, now we are in the child process.
-            //TODO execute the suitable exe file. Should use the execl()
+            if (kid == 0) {
+                execv("./messageSource", argv);
+            } else {
+                execv("./messageDestination", argv);
+            }
         }
     }
 }
@@ -28,6 +32,13 @@ void waitAllChildrenTerminates() {
 
 // The main function, which is the starting point of this program.
 int main(int argc, char *argv[]) {
+
+    if (argc < 2) { //check the number of command line argument.
+        //if the user did not input the command line, print out the warning message, and exit the program.
+        printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
+        exit(1);
+    }
+
     //Flags for the options.
     char iFlag = 0; //flag for the -i option
     char oFlag = 0; //flag for the -o option
@@ -35,7 +46,7 @@ int main(int argc, char *argv[]) {
 
     int opt; //to store the result of the getopt function.
 
-    while ((opt = getopt(argc, argv, "iok")) != -1) { //TODO fill the last argument with the suitable string
+    while ((opt = getopt(argc, argv, "i:o:k:")) != -1) { //TODO fill the last argument with the suitable string
         switch (opt) {
             case 'k' :
                 if (kFlag) { //check if the user input multiple -k option
@@ -69,7 +80,7 @@ int main(int argc, char *argv[]) {
     }
 
     //TODO give suitable arguments by checking the flags
-    forkChildren(); //use the fork() to make child processes.
+    forkChildren(argv); //use the fork() to make child processes.
 
     waitAllChildrenTerminates();
 
