@@ -2,9 +2,10 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 // This function makes the child processes.
-void forkChildren(char *argv[]) {
+void forkChildren(char *inFile, char *outFile, char *keyFile) {
     for (int kid = 0; kid < 2; kid++) {
         pid_t pid = fork(); //gets the process id.
 
@@ -13,9 +14,9 @@ void forkChildren(char *argv[]) {
             exit(1); //terminate the program
         } else if (pid == 0) { //If the value of the pid is 0, now we are in the child process.
             if (kid == 0) {
-                execv("./messageSource", argv);
+                execl("./otpEncryption", "", inFile, keyFile, NULL);
             } else {
-                execv("./messageDestination", argv);
+                execl("./encryptedMessenger", "", outFile, NULL);
             }
         }
     }
@@ -33,7 +34,7 @@ void waitAllChildrenTerminates() {
 // The main function, which is the starting point of this program.
 int main(int argc, char *argv[]) {
 
-    if (argc < 2) { //check the number of command line argument.
+    if (argc < 2 && (argc % 2) == 1) { //check the number of command line argument.
         //if the user did not input the command line, print out the warning message, and exit the program.
         printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
         exit(1);
@@ -46,41 +47,47 @@ int main(int argc, char *argv[]) {
 
     int opt; //to store the result of the getopt function.
 
+    int counter = 1; //to count the command line arguments
+    char *inFile = (char *) malloc(30);
+    char *outFile = (char *) malloc(30);
+    char *keyFile = (char *) malloc(30);
+
     while ((opt = getopt(argc, argv, "i:o:k:")) != -1) { //TODO fill the last argument with the suitable string
         switch (opt) {
             case 'k' :
-                if (kFlag) { //check if the user input multiple -k option
-                    printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
-                    exit(1); //terminate the program
-                }
-                kFlag = 1;
+                kFlag = 1; //as we use -k option, change the value of the kFlag.
+                strcpy(keyFile, argv[counter]);
                 break;
             case 'i' :
-                if (iFlag) { //check if the user input more than 1 -i option
-                    printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
-                    exit(1); //terminate the program
-                }
-                iFlag = 1; //change the value of the iFlag to 1 to change the stream input from stdin to file stream.
+                iFlag = 1; //as we use -i option, change the value of the iFlag.
+                strcpy(inFile, argv[counter]);
                 break;
             case 'o' :
-                if (oFlag) { //check if the user input more than 1 -i option
-                    printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
-                    exit(1); //terminate the program
-                }
-                oFlag = 1;
+                oFlag = 1; //as we use -o option, change the value of the oFlag.
+                strcpy(outFile, argv[counter]);
                 break;
             default:
                 printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
         } //switch ends
+
+        counter += 2; //increase the value of the counter.
+
     } //while loop ends
 
-    if (kFlag == 0) {
+    if (kFlag == 0) { //check if the user input the -k option.
         printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
         exit(1); //terminate the program
     }
 
-    //TODO give suitable arguments by checking the flags
-    forkChildren(argv); //use the fork() to make child processes.
+    if (iFlag == 0) {
+        strcpy(inFile, "std"); //if the user did not use the -i option, use the stdin to read the user input.
+    }
+
+    if (oFlag == 0) {
+        strcpy(outFile, "std"); //if the user did not use the -o option, use the stdout the print out the encrypted message.
+    }
+
+    forkChildren(inFile, outFile, keyFile); //use the fork() to make child processes.
 
     waitAllChildrenTerminates();
 
