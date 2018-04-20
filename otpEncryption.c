@@ -32,7 +32,9 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
     char keyChar;
 
     char *myfifo = "./otpfifo"; //the file path of the FIFO
-    mkfifo(myfifo, 0666); //creating the named pipe FIFO with the permission 0666.
+    if (mkfifo(myfifo, 0666) < 0) { //creating the named pipe FIFO with the permission 0666.
+        perror("mkfifo failed");
+    }
 
     while ((inputChar = fgetc(in)) != EOF) { //read the inputfclose(in); //close the opened file until the fgetc finish reading all inputs
 
@@ -43,18 +45,19 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
 
         char encryptedChar = (inputChar ^ keyChar); //do the xor operation to encrypt the text.
 
-        *buffer++ = encryptedChar;
+        //*buffer++ = encryptedChar;
+        *buffer++ = 'a';
     }
 
-    printf("TEST\n\n%s\n\n\n", savePoint);
-
+    mode_t filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
     int fd;
-    fd = open(myfifo, O_WRONLY | O_NONBLOCK); //open the fifo to write only.
+    fd = open(myfifo, O_RDWR | O_CREAT, filePerms); //open the fifo to write only.
 
     int checker;
     checker = write(fd, buffer, fileSize); //write the encrypted text to the fifo.
+    printf("checker = %d\n", checker);
     if (checker < 0) {
-        printf("FUCK\n");
+        printf("ERROR\n");
     }
 
     free(savePoint); //free the allocated memory.
@@ -64,6 +67,10 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
     if (iFlag == 1) {
         fclose(in); //close the opened file.
     }
+
+    char *buffer2 = (char *) malloc(fileSize); //allocate 9999 bytes to buffer to avoid overflow problem
+    size_t bytes = read(fd, buffer2, fileSize); //read encrypted text from fifo.
+    printf("Test\n\n%sTestENDED\nread %d bytes\n", buffer2, bytes);
 
     close(fd);
 }

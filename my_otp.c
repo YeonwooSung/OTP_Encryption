@@ -92,5 +92,10 @@ int main(int argc, char *argv[]) {
     pid_t pid2 = wait(&status2); //wait the child process finishes
     printf("The child process with the pid %d terminated with the status %d\n", pid2, status2);
 
+    // free the allocated memory
+    free(inFile);
+    free(outFile);
+    free(keyFile);
+
     return 0;
 }

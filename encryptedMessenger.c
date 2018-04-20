@@ -17,13 +17,24 @@ int main(int argc, char *argv[]) {
         out = fopen(argv[0], "wb");
     }
 
-    char *myfifo = "/temp/otpfifo";
-    mkfifo(myfifo, 0666); //make the fifo to communicate with other process.
+    char *myfifo = "./otpfifo";
 
-    int fd = open(myfifo, O_RDONLY | O_NONBLOCK); //open the fifo with read only option.
+    int fd;
 
-    char *buffer = (char *) malloc(4500); //allocate 9999 bytes to buffer to avoid overflow problem
-    read(fd, buffer, 4000); //read encrypted text from fifo.
+    if ( (fd = open(myfifo, O_RDONLY | O_NONBLOCK) ) < 0) { //open the fifo with read only option.
+        perror("mkfifo failed");
+    }
+
+    char *buffer = (char *) malloc(2000); //allocate 9999 bytes to buffer to avoid overflow problem
+    size_t bytes = read(fd, buffer, 1900); //read encrypted text from fifo.
+
+    printf("read %d bytes\n", bytes);
+    printf("Test\n%s\nTestend\n\n", buffer);
+
+    while (*buffer == EOF) {
+        printf("%d\n", *buffer);
+        buffer+=1;
+    }
 
     fputs(buffer, out);
 
