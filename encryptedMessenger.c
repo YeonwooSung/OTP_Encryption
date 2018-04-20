@@ -9,12 +9,6 @@
 int main(int argc, char *argv[]) {
     printf("encryptedMessenger: argv[0] =%s\n", argv[0]);
 
-    if (argc == 1) {
-        printf("otpEncryption error!\n");
-        printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
-        exit(1);
-    }
-
     int oFlag = 0; // to check if the process uses the stdout stream or not.
     FILE *out = stdout;
 
@@ -23,13 +17,13 @@ int main(int argc, char *argv[]) {
         out = fopen(argv[0], "wb");
     }
 
-    char *myfifo = "otpfifo";
+    char *myfifo = "/temp/otpfifo";
     mkfifo(myfifo, 0666); //make the fifo to communicate with other process.
 
-    int fd = open(myfifo, O_RDONLY); //open the fifo with read only option.
+    int fd = open(myfifo, O_RDONLY | O_NONBLOCK); //open the fifo with read only option.
 
-    char *buffer = (char *) malloc(9999); //allocate 9999 bytes to buffer to avoid overflow problem
-    read(fd, buffer, 9999); //read encrypted text from fifo.
+    char *buffer = (char *) malloc(4500); //allocate 9999 bytes to buffer to avoid overflow problem
+    read(fd, buffer, 4000); //read encrypted text from fifo.
 
     fputs(buffer, out);
 

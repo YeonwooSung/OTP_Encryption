@@ -19,12 +19,12 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
 
     //Get the file size to avoid the overflow.
     fseek(in, 0, SEEK_END); //seeks the end of the file.status
-    int fileSize = ftell(in); //gets the size of the file.File descriptor is integer that uniquely identifies an open file of the process.
-
+    size_t fileSize = ftell(in); //gets the size of the file.File descriptor is integer that uniquely identifies an open file of the process.
 
     rewind(in);
 
     char *buffer = (char *) malloc(fileSize); //buffer to store the encrypted texts.
+    char *savePoint = buffer;
 
     FILE *key = fopen(keyFile, "rb");
 
@@ -34,11 +34,6 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
     char *myfifo = "./otpfifo"; //the file path of the FIFO
     mkfifo(myfifo, 0666); //creating the named pipe FIFO with the permission 0666.
 
-    int fd;
-    fd = open(myfifo, O_WRONLY); //open the fifo to write only.
-
-    printf("1\n");
-
     while ((inputChar = fgetc(in)) != EOF) { //read the inputfclose(in); //close the opened file until the fgetc finish reading all inputs
 
         if ( (keyChar = fgetc(key)) == EOF ) { //check if the program reaches to the end of the key file.
@@ -47,15 +42,22 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
         }
 
         char encryptedChar = (inputChar ^ keyChar); //do the xor operation to encrypt the text.
-        printf("%c\n", inputChar);
 
         *buffer++ = encryptedChar;
     }
-    printf("2\n");
 
-    write(fd, buffer, (fileSize + 1)); //write the encrypted text to the fifo.
+    printf("TEST\n\n%s\n\n\n", savePoint);
 
-    free(buffer-fileSize); //free the allocated memory.
+    int fd;
+    fd = open(myfifo, O_WRONLY | O_NONBLOCK); //open the fifo to write only.
+
+    int checker;
+    checker = write(fd, buffer, fileSize); //write the encrypted text to the fifo.
+    if (checker < 0) {
+        printf("FUCK\n");
+    }
+
+    free(savePoint); //free the allocated memory.
 
     fclose(key); //close the opened file
 
@@ -69,18 +71,21 @@ void readAndEncryptTheUserInput(char *inFile, char *keyFile) {
 // The main function, which is the starting point of this process.
 int main(int argc, char *argv[]) {
     printf("otpEncryption: argv[0] = %s\n", argv[0]);
-    if (argc == 0) {
-        printf("otpEncryption error!\n");
-        printf("usage: my_otp [-i infile] [-o outfile] -k keyfile\n");
-        exit(1);
-    }
+
     char *keyFile = (char *) malloc(30);
     char *inFile = (char *) malloc(30);
 
     strcpy(inFile, argv[0]);
     strcpy(keyFile, argv[1]);
 
+    printf("main of otpEncryption testing\n");
+
     readAndEncryptTheUserInput(inFile, keyFile); //reads the input and encrypt it.
+
+    printf("main of otpEncryption testing end\n");
+
+    free(keyFile);
+    free(inFile);
 
     return 0;
 }
