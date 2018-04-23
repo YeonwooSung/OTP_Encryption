@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 // This function is used to encrypt data and write to pipe
@@ -55,12 +56,12 @@ void writeOutput(FILE* output_file, int pipe_read) {
     }
 }
 
-void checkArguments(int argc, char *argv[], char *input_file_name, char *output_file_name, char *key_file_name){
+/* Check the command line options */
+void checkArguments(int argc, char *argv[], char *input_file_name, char *output_file_name, char *key_file_name) {
     int opt ;
     int optionNumCounter = 0;
     while (( opt = getopt ( argc , argv , "i:o:k:" )) != -1) {
-        switch ( opt )
-        {
+        switch ( opt ) {
             case 'i':
                 if(optarg != NULL){
                     strcpy(input_file_name, optarg);
