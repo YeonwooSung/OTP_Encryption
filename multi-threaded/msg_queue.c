@@ -62,7 +62,6 @@ void initMQueue(MQueue *queue) {
 
 //Print out the user message.
 void printMQueue(MQueue *queue) {
-    //TODO probably, I need to free the node in here?
 
     Node *target = read_msg(queue);
 
