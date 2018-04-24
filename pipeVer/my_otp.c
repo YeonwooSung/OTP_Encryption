@@ -43,16 +43,16 @@ void encryptData(FILE* input, FILE* key_file, int writePipe){
     }
 }
 
-//
+//Print out the encrypted (or decrypted) text.
 void writeOutput(FILE* output_file, int pipe_read) {
 
     long file_size;
-    read(pipe_read, &file_size, sizeof(long long));
+    read(pipe_read, &file_size, sizeof(long long)); //read the first integer, which is the size of the input string, through the pipe.
 
     int c;
     for (long long i = 0; i < file_size; ++i) {
-        read(pipe_read, &c, sizeof(int));
-        fputc(c, output_file);
+        read(pipe_read, &c, sizeof(int)); //read the single character by using the pipe.
+        fputc(c, output_file); //print out the read character.
     }
 }
 
@@ -170,7 +170,6 @@ int main (int argc, char *argv[]) {
 
             close(pd[0]); // close read pipe
             close(pd[1]); // close write pipe
-            //fflush(output_file);
             fclose(output_file);
             free(inputName); // free used memory allocated space
             free(output_file_name);
