@@ -11,36 +11,18 @@ int getInputsToStream(MQueue *q) {
     char *buffer = (char *) malloc(256);
     char *savePoint = buffer; //will use this to free the allocated memory
 
-    int totalNumOfChars = 0;
+    int totalNum = 0;
 
     while (fgets(buffer, 256, stdin) != NULL) {
-        int counter = 0;
 
-        while (*buffer != '\n' && *buffer != '\0' && counter < 256) {
-            //
-            int input = *buffer;
-            send_msg(q, input);
-            buffer += 1;
-            counter += 1;
-            totalNumOfChars += 1;
-        }
+        send_msg(q, buffer);
+        totalNum += 1;
 
-        if (*buffer == '\n') { //check if the current character is the next line character.
-            int input = *buffer;
-            send_msg(q, input);
-            totalNumOfChars += 1;
-        }
-
-        free(savePoint); //free the allocated memory
-
-        buffer = (char *) malloc(256);
-
-        savePoint = buffer;
     }
 
     free(savePoint);
 
-    return totalNumOfChars;
+    return totalNum;
 }
 
 // Prints the output message through the stdout stream.
@@ -54,7 +36,7 @@ void *writeOutputsToStream(void *queue) {
 int main(void) {
 
     MQueue *queue = (MQueue *) malloc(sizeof(MQueue));
-    initMQueue(queue);
+    initMQueue(queue, "keyfile16K.key");
 
     int num = getInputsToStream(queue); //get the user input
 
@@ -69,7 +51,7 @@ int main(void) {
         }
     }
 
-    nanosleep((const struct timespec[]){{0, 50000L}}, NULL); //use the nanosleep to sleep the main thread
+    //nanosleep((const struct timespec[]){{0, 50000L}}, NULL); //use the nanosleep to sleep the main thread
 
     printf("sleep finish\n");
 
