@@ -7,6 +7,7 @@
 /* Interface for integer MQueue */
 typedef struct node{
 	char *data; //the encrypted message data
+	int count;
 	struct node *next; //pointer to the next node to implement the linked list
 } Node;
 

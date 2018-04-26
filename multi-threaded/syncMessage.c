@@ -8,12 +8,12 @@
 // Gets the input message from the stdin stream.
 int getInputsToStream(MQueue *q) {
 
-    char *buffer = (char *) malloc(256);
+    char *buffer = (char *) malloc(300);
     char *savePoint = buffer; //will use this to free the allocated memory
 
     int totalNum = 0;
 
-    while (fgets(buffer, 256, stdin) != NULL) {
+    while (fgets(buffer, 299, stdin) != NULL) {
 
         send_msg(q, buffer);
         totalNum += 1;
@@ -35,10 +35,14 @@ void *writeOutputsToStream(void *queue) {
 // The main function.
 int main(void) {
 
+    char *keyFileName = (char *) malloc(40);
+    strcpy(keyFileName, "keyfile16K.key");
+
     MQueue *queue = (MQueue *) malloc(sizeof(MQueue));
-    initMQueue(queue, "keyfile16K.key");
+    initMQueue(queue, keyFileName);
 
     int num = getInputsToStream(queue); //get the user input
+    printf("num of lines: %d\n", num);
 
     pthread_t writer[num];
 
@@ -51,14 +55,14 @@ int main(void) {
         }
     }
 
-    //nanosleep((const struct timespec[]){{0, 50000L}}, NULL); //use the nanosleep to sleep the main thread
+    //nanosleep((const struct timespec[]){{0, 50000L}}, NULL);
 
-    printf("sleep finish\n");
 
     int j, status;
     for (j = 0; j < num; j++) {
         pthread_join(writer[j], (void *)&status);
     }
+
 
     freeMQueue(queue);
 }

@@ -4,30 +4,19 @@
 #include <pthread.h>
 #include "msg_queue.h"
 
-char *encryptMessageWithXOR(FILE *key, char *value) {
-    char *encryptedString = (char *) malloc(300);
-    char *string = value; //save the memory address of the value.
-    char *newString = encryptedString; //save the memory address of the encrypted string.
+char *encryptMessageWithXOR(FILE *key, char *value, int count) {
+    char *encryptedString = value; //save the memory address of the value.
 
     char keyByte;
 
-    while (*value != '\n' || *value != '\0') {
+    while (count-- > 0) {
         if ( (keyByte = fgetc(key)) == EOF ) {
             rewind(key); //rewind the key stream
             keyByte = fgetc(key);
         }
-        *encryptedString++ = keyByte ^ (*value++); //encrypt the input string by using XOR operation.
+        *value = keyByte ^ (*value); //encrypt the input string by using XOR operation.
+        value += 1;
     }
-
-    if (*value == '\n') {
-        keyByte = fgetc(key);
-        *encryptedString++ = keyByte ^ (*value++);
-    } else {
-        *encryptedString = '\0'; // add the terminator at the end.
-    }
-
-    //reset the memory address
-    encryptedString = newString;
 
     return encryptedString;
 }
@@ -38,13 +27,16 @@ void send_msg(MQueue *queue, char *value) {
     pthread_mutex_lock(queue->mutex);
 
     FILE *key = fopen(queue->keyFile, "r");
-    char *val = (char *) malloc(256);
+    char *val = (char *) malloc(300);
 
     strcpy(val, value);
 
+    int count = strlen(value);
+
     Node *node = (Node *) malloc(sizeof(Node)); //allocate memory to create node.
-    node->data = encryptMessageWithXOR(key, val); //set the data value of the new node
+    node->data = encryptMessageWithXOR(key, val, count); //set the data value of the new node
     node->next = 0; //set the pointer of the next node
+    node->count = count;
 
     if (queue->head == NULL) { //check whether the queue contains the node or not
         queue->head = node; //set the initial head of the message queue
@@ -54,6 +46,8 @@ void send_msg(MQueue *queue, char *value) {
     }
 
     queue->tail = node; //add the node to the queue
+
+    fclose(key);
 
     pthread_mutex_unlock(queue->mutex);
 }
@@ -103,9 +97,11 @@ void printMQueue(MQueue *queue) {
 
     FILE *key = fopen(queue->keyFile, "r");
 
-    char *content = encryptMessageWithXOR(key, target->data); //get the data from the message node.
+    char *content = encryptMessageWithXOR(key, target->data, target->count); //get the data from the message node.
     printf("%s", content); //print out the message data.
+    free(target->data);
     free(target);
+    fclose(key);
     pthread_mutex_unlock(queue->mutex);
 }
 
